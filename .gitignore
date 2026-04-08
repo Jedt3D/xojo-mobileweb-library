@@ -1,6 +1,20 @@
-node_modules/
-.superpowers/
-.DS_Store
-.remember/
+# Xojo
+Builds*
+*.debug
+*.debug.app
+Debug*.exe
+Debug*/Debug*.exe
+Debug*/Debug*\ Libs
+*.rbuistate
 *.xojo_uistate
-Builds/
+*.obsolete*
+
+# Dependencies
+node_modules/
+
+# OS
+.DS_Store
+
+# Tools
+.superpowers/
+.remember/
