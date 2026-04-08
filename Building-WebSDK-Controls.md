@@ -189,7 +189,9 @@ Draws the IDE preview. Uses Xojo Graphics API — runs as **XojoScript** in the 
 - **`g.Italic` does NOT exist** — same workaround
 - **Cannot access private properties** (`mIsOn`, `mLabel`, etc.) — use `StringProperty("Name")`, `BooleanProperty("Name")`, `IntegerProperty("Name")` instead
 - **`For Each` may not work** — use `For i As Integer = 0 To array.LastIndex` instead
+- **`Array()` function may not work** — declare variables individually instead of using arrays
 - Any XojoScript error silently stops execution — the control shows nothing or a warning icon
+- **IDE caches preview code** — after changing DrawControlInLayoutEditor, you must delete the control instance from the page and re-drag it from the library to see changes
 - Stick to: `g.DrawingColor`, `g.FontSize`, `g.DrawText`, `g.TextWidth`, `g.TextHeight`, `g.FillRoundRectangle`, `g.DrawRoundRectangle`, `g.FillRectangle`, `g.DrawRectangle`, `g.FillOval`, `g.DrawOval`, `g.DrawLine`
 
 **XojoScript property accessors (the ONLY way to read control state in the preview):**

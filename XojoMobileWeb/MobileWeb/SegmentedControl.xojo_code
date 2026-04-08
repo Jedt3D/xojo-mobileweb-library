@@ -3,54 +3,39 @@ Protected Class SegmentedControl
 Inherits WebSDKUIControl
 	#tag Event
 		Sub DrawControlInLayoutEditor(g As Graphics)
-		  // Background pill
-		  Var pillH As Double = 36
-		  Var pillY As Double = (g.Height - pillH) / 2
-		  Var pillX As Double = 4
-		  Var pillW As Double = g.Width - 8
-		  Var cornerR As Double = 10
-
-		  g.DrawingColor = &cE2E8F0
-		  g.FillRoundRectangle(pillX, pillY, pillW, pillH, cornerR, cornerR)
-
-		  // Sample segments
+		  // No arrays, no loops — XojoScript safe
 		  g.FontSize = 13
-		  Var labels() As String = Array("All", "Active", "Done")
-		  Var segPad As Double = 12
-		  Var segGap As Double = 2
-		  Var segH As Double = pillH - 4
-		  Var segY As Double = pillY + 2
-		  Var segR As Double = cornerR - 2
 
-		  // Calculate segment widths
-		  Var totalTextW As Double = 0
-		  For j As Integer = 0 To labels.LastIndex
-		    totalTextW = totalTextW + g.TextWidth(labels(j)) + segPad * 2
-		  Next
+		  // Background pill
+		  g.DrawingColor = &cE2E8F0
+		  g.FillRoundRectangle(0, 0, g.Width, g.Height, 10, 10)
 
-		  Var segX As Double = pillX + 2
+		  // Segment sizes
+		  Var pad As Double = 14
+		  Var segH As Double = g.Height - 4
+		  Var segY As Double = 2
+		  Var textY As Double = g.Height / 2 + g.TextHeight / 4
 
-		  For i As Integer = 0 To labels.LastIndex
-		    Var lbl As String = labels(i)
-		    Var segW As Double = g.TextWidth(lbl) + segPad * 2
+		  // Segment 1: "All" — selected (white pill)
+		  Var w1 As Double = g.TextWidth("All") + pad * 2
+		  Var x1 As Double = 2
+		  g.DrawingColor = &cFFFFFF
+		  g.FillRoundRectangle(x1, segY, w1, segH, 8, 8)
+		  g.DrawingColor = &cD0D5DD
+		  g.DrawRoundRectangle(x1, segY, w1, segH, 8, 8)
+		  g.DrawingColor = &c0F172A
+		  g.DrawText("All", x1 + pad, textY)
 
-		    If i = 0 Then
-		      // Selected segment - white with shadow effect
-		      g.DrawingColor = &cFFFFFF
-		      g.FillRoundRectangle(segX, segY, segW, segH, segR, segR)
-		      // Subtle shadow border
-		      g.DrawingColor = &cD0D5DD
-		      g.DrawRoundRectangle(segX, segY, segW, segH, segR, segR)
-		      // Text
-		      g.DrawingColor = &c0F172A
-		    Else
-		      // Unselected segment
-		      g.DrawingColor = &c64748B
-		    End If
+		  // Segment 2: "Active"
+		  Var x2 As Double = x1 + w1 + 2
+		  g.DrawingColor = &c64748B
+		  g.DrawText("Active", x2 + pad, textY)
 
-		    g.DrawText(lbl, segX + segPad, segY + segH / 2 + g.TextHeight / 4)
-		    segX = segX + segW + segGap
-		  Next
+		  // Segment 3: "Done"
+		  Var w2 As Double = g.TextWidth("Active") + pad * 2
+		  Var x3 As Double = x2 + w2 + 2
+		  g.DrawingColor = &c64748B
+		  g.DrawText("Done", x3 + pad, textY)
 		End Sub
 	#tag EndEvent
 
