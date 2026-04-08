@@ -95,14 +95,16 @@ Class=Card;MobileWeb/Controls/Card.xojo_code;&hCARD_ID;&hLIB_ID;false
 
 | # | Control | Type | Inspired By | Description |
 |---|---|---|---|---|
-| 0 | `MobileTheme` | Module | — | Shared CSS design tokens, theme WebFile |
+| 0 | `MobileTheme` | Module | — | Shared CSS design tokens, theme WebFile, safe-area CSS |
 | 1 | `Toggle` | Visual | ion-toggle | iOS/Android-style on/off switch |
 | 2 | `Card` | Visual | ion-card | Content card with image, header, body |
 | 3 | `SegmentedControl` | Visual | ion-segment | iOS-style tab/filter switcher |
 
 **Why these three first:** Toggle is the simplest interactive control (proves the full round-trip). Card is a display-only control (proves content rendering). SegmentedControl is multi-item interactive (proves the item management pattern from Chips/Chex scales).
 
-### Phase 2 — Core Set (6 more controls)
+**Note:** `MobileTheme` also includes safe-area CSS (`viewport-fit=cover` + `env(safe-area-inset-*)` padding) so controls automatically respect iPhone notch / Dynamic Island / Android gesture bar from day one.
+
+### Phase 2 — Core Set (7 more controls)
 
 | # | Control | Type | Inspired By | Description |
 |---|---|---|---|---|
@@ -112,16 +114,23 @@ Class=Card;MobileWeb/Controls/Card.xojo_code;&hCARD_ID;&hLIB_ID;false
 | 7 | `ActionSheet` | Visual | ion-action-sheet | Bottom sheet with option list |
 | 8 | `FAB` | Visual | ion-fab | Floating action button |
 | 9 | `Range` | Visual | ion-range | Touch-friendly slider with labels |
+| 10 | `MobileHeader` | Visual | ion-header + ion-toolbar | Top navigation bar with title, back button, action buttons |
 
-### Phase 3 — Enhanced (5 more controls)
+**Why MobileHeader in Phase 2:** The top nav bar is THE signal that something is a mobile app. It provides back navigation, a title, and action buttons — making Xojo WebPages feel like native app screens rather than web pages.
+
+### Phase 3 — Enhanced (7 more controls)
 
 | # | Control | Type | Inspired By | Description |
 |---|---|---|---|---|
-| 10 | `BottomSheet` | Visual | ion-modal (sheet) | Draggable bottom panel |
-| 11 | `TabBar` | Visual | ion-tab-bar | Bottom navigation tabs |
-| 12 | `Badge` | Visual | ion-badge | Count indicator |
-| 13 | `Accordion` | Visual | ion-accordion | Collapsible content sections |
-| 14 | `Skeleton` | Visual | ion-skeleton-text | Loading placeholder |
+| 11 | `BottomSheet` | Visual | ion-modal (sheet) | Draggable bottom panel |
+| 12 | `TabBar` | Visual | ion-tab-bar | Bottom navigation tabs |
+| 13 | `Badge` | Visual | ion-badge | Count indicator |
+| 14 | `Accordion` | Visual | ion-accordion | Collapsible content sections |
+| 15 | `Skeleton` | Visual | ion-skeleton-text | Loading placeholder |
+| 16 | `Refresher` | Non-visual | ion-refresher | Pull-to-refresh gesture on scrollable content |
+| 17 | `PageTransition` | Non-visual | CSS animations | Slide/fade/scale animations between screens |
+
+**Why Refresher and PageTransition in Phase 3:** Pull-to-refresh is expected by all mobile users — its absence makes an app feel broken. Page transitions (slide-in/out when navigating) give spatial context and make screen changes feel native rather than instant-snap.
 
 ---
 
@@ -610,14 +619,17 @@ Phase 2:
 ### Control 0: MobileTheme Module
 
 **Type:** Module (not a control)  
-**Purpose:** Shared CSS design tokens + theme WebFile
+**Purpose:** Shared CSS design tokens + theme WebFile + safe-area support
 
 **Contains:**
 - `SharedThemeFile As WebFile` (Public Shared)
 - `ThemeCSS() As String` — returns the full token CSS string
-- Dark mode token overrides
+- `EnsureThemeFile()` — creates SharedThemeFile once, called by every control
+- Dark mode token overrides via `@media (prefers-color-scheme: dark)`
+- Safe-area CSS: `env(safe-area-inset-top)`, `env(safe-area-inset-bottom)` padding for `.mobile-safe-content` helper class
+- Viewport meta tag injection via controls that use `SessionHead`: `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">`
 
-**No events, no DOM, no JavaScript.** This is purely a CSS delivery mechanism.
+**No events, no DOM, no JavaScript.** This is purely a CSS + meta tag delivery mechanism.
 
 ---
 
@@ -758,6 +770,104 @@ Phase 2:
   <button class="mobile-segment__button">Done</button>
 </div>
 ```
+
+---
+
+### Control 10: MobileHeader (Phase 2)
+
+**Inspired by:** ion-header + ion-toolbar  
+**Class:** `MobileHeader` (accessed as `MobileWeb.MobileHeader`)  
+**JS Class:** `MobileWeb.MobileHeader`
+
+**Properties:**
+
+| Property | Type | Default | Inspector | Description |
+|---|---|---|---|---|
+| Title | String | "" | Visible | Main header title text |
+| Subtitle | String | "" | Visible | Smaller text below title |
+| ShowBackButton | Boolean | False | Visible | Show back arrow on left |
+| BackButtonText | String | "Back" | Visible | Label next to back arrow |
+| RightButtonText | String | "" | Visible | Text button on right (e.g. "Edit") |
+| Translucent | Boolean | False | Visible | Frosted glass blur effect |
+
+**Events:**
+
+| Event | Parameters | Description |
+|---|---|---|
+| BackPressed | — | Back button tapped |
+| RightButtonPressed | — | Right action button tapped |
+
+**CSS Classes:**
+
+| Class | Description |
+|---|---|
+| `.mobile-header` | Root container (sticky top) |
+| `.mobile-header__toolbar` | Inner toolbar bar |
+| `.mobile-header__back` | Back button area |
+| `.mobile-header__title` | Title text |
+| `.mobile-header__subtitle` | Subtitle text |
+| `.mobile-header__action` | Right action button |
+| `.mobile-header.is-translucent` | Blur backdrop effect |
+
+**DOM Structure:**
+```html
+<div class="mobile-header">
+  <div class="mobile-header__toolbar">
+    <button class="mobile-header__back">← Back</button>
+    <div class="mobile-header__title">Title</div>
+    <div class="mobile-header__subtitle">Subtitle</div>
+    <button class="mobile-header__action">Edit</button>
+  </div>
+</div>
+```
+
+---
+
+### Control 16: Refresher (Phase 3)
+
+**Class:** `Refresher` (accessed as `MobileWeb.Refresher`)  
+**JS Class:** `MobileWeb.Refresher`  
+**Type:** Non-visual (WebSDKControl)
+
+**Properties:**
+
+| Property | Type | Default | Inspector | Description |
+|---|---|---|---|---|
+| PullDistance | Integer | 60 | Visible | Pixels to pull before triggering |
+
+**Methods:**
+- `Complete()` — tells the browser the refresh is done; hides the spinner
+
+**Events:**
+
+| Event | Parameters | Description |
+|---|---|---|
+| Refresh | — | Fired when pull threshold reached |
+
+---
+
+### Control 17: PageTransition (Phase 3)
+
+**Class:** `PageTransition` (accessed as `MobileWeb.PageTransition`)  
+**JS Class:** `MobileWeb.PageTransition`  
+**Type:** Non-visual (WebSDKControl)
+
+**Properties:**
+
+| Property | Type | Default | Inspector | Description |
+|---|---|---|---|---|
+| Animation | Integer | 0 | Visible | 0=SlideLeft, 1=SlideRight, 2=Fade, 3=Scale |
+| DurationMS | Integer | 300 | Visible | Animation duration in milliseconds |
+
+**Methods:**
+- `AnimateIn(targetControlID As String)` — animate a WebContainer into view
+- `AnimateOut(targetControlID As String)` — animate a WebContainer out of view
+
+**Events:**
+
+| Event | Parameters | Description |
+|---|---|---|
+| AnimationComplete | — | Fired when animation finishes |
 
 ---
 
