@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -L \"https://ionicframework.com/docs\")",
+      "Bash(curl -s -L \"https://ionicframework.com/docs/intro/cdn\")",
+      "Bash(curl -s -L \"https://ionicframework.com/docs/components\")"
+    ]
+  }
+}

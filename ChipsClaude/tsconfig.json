@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2015",
+    "module": "none",
+    "rootDir": "src",
+    "outDir": "dist",
+    "removeComments": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "src/Chips.ts",
+    "src/XojoWebSDK.d.ts"
+  ]
+}

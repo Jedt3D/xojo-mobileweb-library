@@ -1,0 +1,6 @@
+node_modules/
+.superpowers/
+.DS_Store
+.remember/
+*.xojo_uistate
+Builds/
