@@ -3,46 +3,34 @@ Protected Class Toggle
 Inherits WebSDKUIControl
 	#tag Event
 		Sub DrawControlInLayoutEditor(g As Graphics)
-		  // Background
+		  // XojoScript context: use StringProperty/BooleanProperty, not m* fields
 		  g.DrawingColor = &cF8FAFC
 		  g.FillRectangle(0, 0, g.Width, g.Height)
 
-		  // Draw toggle track
 		  Var trackW As Double = 52
 		  Var trackH As Double = 32
 		  Var trackX As Double = 10
 		  Var trackY As Double = (g.Height - trackH) / 2
 		  Var thumbSize As Double = 28
+		  Var isOn As Boolean = BooleanProperty("IsOn")
 
-		  If mIsOn Then
-		    // On state - primary color
+		  If isOn Then
 		    g.DrawingColor = &c1D4ED8
 		    g.FillRoundRectangle(trackX, trackY, trackW, trackH, trackH, trackH)
-		    // Thumb (right position)
 		    g.DrawingColor = &cFFFFFF
 		    g.FillOval(trackX + trackW - thumbSize - 2, trackY + 2, thumbSize, thumbSize)
 		  Else
-		    // Off state - gray
 		    g.DrawingColor = &cCBD5E1
 		    g.FillRoundRectangle(trackX, trackY, trackW, trackH, trackH, trackH)
-		    // Thumb (left position)
 		    g.DrawingColor = &cFFFFFF
 		    g.FillOval(trackX + 2, trackY + 2, thumbSize, thumbSize)
 		  End If
 
-		  // Label
-		  If mLabel <> "" Then
+		  Var lbl As String = StringProperty("Label")
+		  If lbl <> "" Then
 		    g.FontSize = 14
 		    g.DrawingColor = &c0F172A
-		    Var labelX As Double
-		    If mLabelPosition = 0 Then
-		      // Right of toggle
-		      labelX = trackX + trackW + 10
-		    Else
-		      // Left of toggle - would need to shift track, just show right for preview
-		      labelX = trackX + trackW + 10
-		    End If
-		    g.DrawText(mLabel, labelX, g.Height / 2 + g.TextHeight / 4)
+		    g.DrawText(lbl, trackX + trackW + 10, g.Height / 2 + g.TextHeight / 4)
 		  End If
 		End Sub
 	#tag EndEvent

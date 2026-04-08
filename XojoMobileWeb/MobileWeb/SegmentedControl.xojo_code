@@ -24,8 +24,8 @@ Inherits WebSDKUIControl
 
 		  // Calculate segment widths
 		  Var totalTextW As Double = 0
-		  For Each lbl As String In labels
-		    totalTextW = totalTextW + g.TextWidth(lbl) + segPad * 2
+		  For j As Integer = 0 To labels.LastIndex
+		    totalTextW = totalTextW + g.TextWidth(labels(j)) + segPad * 2
 		  Next
 
 		  Var segX As Double = pillX + 2

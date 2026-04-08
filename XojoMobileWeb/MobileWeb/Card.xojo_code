@@ -39,8 +39,8 @@ Inherits WebSDKUIControl
 		    contentY = imgH + 12
 		  End If
 
-		  // Title
-		  Var titleText As String = mTitle
+		  // Title — use StringProperty for XojoScript access
+		  Var titleText As String = StringProperty("Title")
 		  If titleText = "" Then titleText = "Card Title"
 		  g.FontSize = 16
 		  g.DrawingColor = &c0F172A
@@ -48,7 +48,7 @@ Inherits WebSDKUIControl
 		  contentY = contentY + g.TextHeight + 4
 
 		  // Subtitle
-		  Var subtitleText As String = mSubtitle
+		  Var subtitleText As String = StringProperty("Subtitle")
 		  If subtitleText = "" Then subtitleText = "Subtitle"
 		  g.FontSize = 12
 		  g.DrawingColor = &c64748B
@@ -56,7 +56,7 @@ Inherits WebSDKUIControl
 		  contentY = contentY + g.TextHeight + 8
 
 		  // Body
-		  Var bodyText As String = mBody
+		  Var bodyText As String = StringProperty("Body")
 		  If bodyText = "" Then bodyText = "Body text..."
 		  g.FontSize = 13
 		  g.DrawingColor = &c94A3B8
