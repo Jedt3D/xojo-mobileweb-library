@@ -45,7 +45,12 @@ Protected Module MobileTheme
 		  + "--mobile-shadow-sm:0 1px 2px rgba(0,0,0,0.2);" _
 		  + "--mobile-shadow-md:0 4px 6px -1px rgba(0,0,0,0.3);" _
 		  + "--mobile-shadow-lg:0 10px 15px -3px rgba(0,0,0,0.3)" _
-		  + "}}}"
+		  + "}}}" _
+		  + ".mobile-safe-content{" _
+		  + "padding-top:env(safe-area-inset-top);" _
+		  + "padding-bottom:env(safe-area-inset-bottom);" _
+		  + "padding-left:env(safe-area-inset-left);" _
+		  + "padding-right:env(safe-area-inset-right)}"
 		End Function
 	#tag EndMethod
 

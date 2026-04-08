@@ -2,11 +2,11 @@
 Begin WebPage MainWebPage
    AllowTabOrderWrap=   True
    Compatibility   =   ""
-   ControlCount    =   1
+   ControlCount    =   3
    ControlID       =   ""
    CSSClasses      =   ""
    Enabled         =   False
-   Height          =   400
+   Height          =   600
    ImplicitInstance=   True
    Index           =   -2147483648
    Indicator       =   0
@@ -58,6 +58,55 @@ Begin WebPage MainWebPage
       _mName          =   ""
       _mPanelIndex    =   -1
    End
+   Begin SegmentedControl Segment1
+      ControlID       =   ""
+      Enabled         =   True
+      Height          =   36
+      Index           =   -2147483648
+      Indicator       =   0
+      ItemList        =   "All,Active,Done"
+      Left            =   40
+      LockBottom      =   False
+      LockHorizontal  =   False
+      LockLeft        =   True
+      LockRight       =   False
+      LockTop         =   True
+      LockVertical    =   False
+      PanelIndex      =   0
+      SelectedIndex   =   0
+      TabIndex        =   1
+      Top             =   100
+      Visible         =   True
+      Width           =   300
+      _mName          =   ""
+      _mPanelIndex    =   -1
+   End
+   Begin Card Card1
+      Body            =   "This is a sample card with body text to test the MobileWeb Card control."
+      ControlID       =   ""
+      Elevated        =   True
+      Enabled         =   True
+      Height          =   200
+      ImageURL        =   ""
+      Index           =   -2147483648
+      Indicator       =   0
+      Left            =   40
+      LockBottom      =   False
+      LockHorizontal  =   False
+      LockLeft        =   True
+      LockRight       =   False
+      LockTop         =   True
+      LockVertical    =   False
+      PanelIndex      =   0
+      Subtitle        =   "A mobile-first control"
+      TabIndex        =   2
+      Title           =   "MobileWeb Card"
+      Top             =   160
+      Visible         =   True
+      Width           =   300
+      _mName          =   ""
+      _mPanelIndex    =   -1
+   End
 End
 #tag EndWebPage
 
@@ -67,7 +116,23 @@ End
 #tag Events Toggle1
 	#tag Event
 		Sub Toggled(value As Boolean)
-		  System.DebugLog("Toggle1 toggled: " + If(value, "ON", "OFF"))
+		  System.DebugLog("Toggle1: " + If(value, "ON", "OFF"))
+		End Sub
+	#tag EndEvent
+#tag EndEvents
+
+#tag Events Segment1
+	#tag Event
+		Sub SelectionChanged(index As Integer, name As String)
+		  System.DebugLog("Segment1: index=" + index.ToString + " name=" + name)
+		End Sub
+	#tag EndEvent
+#tag EndEvents
+
+#tag Events Card1
+	#tag Event
+		Sub Pressed()
+		  System.DebugLog("Card1: pressed")
 		End Sub
 	#tag EndEvent
 #tag EndEvents
