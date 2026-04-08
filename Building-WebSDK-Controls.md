@@ -2,7 +2,7 @@
 
 A battle-tested guide based on building the Chips and Chex controls from scratch — every mistake made, every silent failure diagnosed, every pattern proven.
 
-**Updated:** April 2026 — includes convenience API patterns, multi-control namespaces, IDE inspector tricks, and CSS strategies learned from building two production controls.
+**Updated:** April 2026 — includes convenience API patterns, multi-control namespaces, IDE inspector tricks, CSS strategies, shared theme gotchas, and XojoScript limitations learned from building Chips, Chex, and MobileWeb controls.
 
 ---
 
@@ -150,9 +150,24 @@ End Function
 
 Same pattern as JS, for CSS files. Use `"text/css"` MIME type.
 
-**Multiple CSS files:** You can return multiple URLs. Useful for shared theme + component CSS:
+**⚠ CRITICAL: The framework deduplicates CSS URLs.** If multiple controls return the same URL (e.g., a shared theme file), the framework skips it after the first load — and may skip the ENTIRE array for subsequent controls. Each control should return only its OWN CSS URL:
+
 ```xojo
+' CORRECT — only return this control's CSS
+Return Array(SharedCSSFile.URL)
+```
+
+```xojo
+' WRONG — if SharedThemeFile.URL was already loaded by another control,
+' the framework may skip this entire array, including SharedCSSFile.URL
 Return Array(SharedThemeFile.URL, SharedCSSFile.URL)
+```
+
+**Shared theme CSS:** Have the FIRST control that loads (or a dedicated theme module) return the theme URL. All other controls return only their own CSS — the theme CSS variables are global to the page once loaded.
+
+**Wrapper element sizing:** The root DOMElement is sized by the framework (absolute positioning). Your child wrapper div needs explicit sizing to fill it:
+```javascript
+this.wrapper.style.cssText = 'width:100%;height:100%;box-sizing:border-box';
 ```
 
 ### 6. SessionHead(session) → String
@@ -161,13 +176,19 @@ Injects raw HTML into `<head>`. Useful for external CDN links or viewport meta t
 
 ### 7. DrawControlInLayoutEditor(g As Graphics)
 
-Draws the IDE preview. Uses Xojo Graphics API — runs as XojoScript in the IDE.
+Draws the IDE preview. Uses Xojo Graphics API — runs as **XojoScript** in the IDE (a restricted subset of Xojo).
 
 **Important:**
 - `g.TextHeight` is a **property** (no parameters)
 - `g.TextWidth(text)` is a **method** (takes string parameter)
 - Errors show as a warning icon in the IDE, not as compile errors
 - Use `g.Width` and `g.Height` for the control's dimensions
+
+**⚠ XojoScript limitations — these silently kill the preview:**
+- **`g.Bold` does NOT exist** — use `g.FontSize` for visual emphasis instead
+- **`g.Italic` does NOT exist** — same workaround
+- Any XojoScript error silently stops execution — the control shows nothing or a warning icon
+- Stick to: `g.DrawingColor`, `g.FontSize`, `g.DrawText`, `g.TextWidth`, `g.TextHeight`, `g.FillRoundRectangle`, `g.DrawRoundRectangle`, `g.FillRectangle`, `g.DrawRectangle`, `g.FillOval`, `g.DrawOval`, `g.DrawLine`
 
 ```xojo
 Sub DrawControlInLayoutEditor(g As Graphics)
@@ -860,9 +881,12 @@ End Sub
 | Inline styles on root element | Conflicts with framework positioning | Use child elements |
 | `#tag EventHandler` with `Sub Control_Event()` | Events never fire | Use `#tag Events ControlName` blocks |
 | `g.TextHeight(text)` in layout editor | Compile error, shows warning icon | Use `g.TextHeight` (property, no params) |
+| `g.Bold = True` in layout editor | Silently kills IDE preview — `g.Bold` doesn't exist in XojoScript | Use `g.FontSize` for emphasis |
 | Setting `Enabled` without `UpdateControl` | Browser doesn't reflect change | Call `control.UpdateControl` after |
 | Styling bare HTML elements in CSS | Conflicts with Bootstrap 5.3 | Always use scoped class selectors |
 | `As New Dictionary` in `#tag Property` | Doesn't initialize properly | Initialize in Constructor or method |
+| Returning shared theme URL from multiple controls | Framework deduplicates URLs; may skip your control's own CSS | Each control returns only its own CSS URL |
+| Wrapper div without `width:100%;height:100%` | Child wrapper has zero size, content invisible | Set inline style: `width:100%;height:100%;box-sizing:border-box` |
 
 ### SILENT FAILURES (The Dangerous Ones)
 
@@ -873,6 +897,10 @@ These produce no error messages — the control simply doesn't render:
 3. **Raw JSON strings in Serialize** — `JSON.parse` fails at position 499+, hard to diagnose without try/catch
 4. **Code after `super.updateControl()`** — silently skipped
 5. **Missing `UpdateControl` after property change** — browser shows stale state, no error
+6. **Duplicate CSS URLs across controls** — framework deduplicates URLs; if your control returns a shared URL already loaded by another control, the framework may skip your control's own CSS URL too. Each control should return only its OWN CSS URL.
+7. **`g.Bold` in DrawControlInLayoutEditor** — `g.Bold` does not exist in XojoScript; silently kills the entire IDE preview. Use `g.FontSize` for emphasis instead.
+8. **Wrapper div without explicit sizing** — child wrapper divs don't automatically fill the root DOMElement. Set `width:100%;height:100%;box-sizing:border-box` as inline style on the wrapper.
+9. **`System.DebugLog` vs browser console** — `System.DebugLog` outputs to the Xojo IDE Messages pane (View → Messages), NOT the browser console. For browser-side debugging, use `console.log` in the JS code.
 
 ---
 

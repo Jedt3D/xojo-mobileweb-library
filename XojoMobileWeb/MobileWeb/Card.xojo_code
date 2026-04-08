@@ -43,7 +43,6 @@ Inherits WebSDKUIControl
 		  Var titleText As String = mTitle
 		  If titleText = "" Then titleText = "Card Title"
 		  g.FontSize = 16
-		  g.Bold = True
 		  g.DrawingColor = &c0F172A
 		  g.DrawText(titleText, contentX, contentY + g.TextHeight)
 		  contentY = contentY + g.TextHeight + 4
@@ -51,8 +50,7 @@ Inherits WebSDKUIControl
 		  // Subtitle
 		  Var subtitleText As String = mSubtitle
 		  If subtitleText = "" Then subtitleText = "Subtitle"
-		  g.FontSize = 13
-		  g.Bold = False
+		  g.FontSize = 12
 		  g.DrawingColor = &c64748B
 		  g.DrawText(subtitleText, contentX, contentY + g.TextHeight)
 		  contentY = contentY + g.TextHeight + 8
@@ -60,8 +58,7 @@ Inherits WebSDKUIControl
 		  // Body
 		  Var bodyText As String = mBody
 		  If bodyText = "" Then bodyText = "Body text..."
-		  g.FontSize = 14
-		  g.Bold = False
+		  g.FontSize = 13
 		  g.DrawingColor = &c94A3B8
 		  // Only draw if there's room
 		  If contentY + g.TextHeight < g.Height - 12 Then
@@ -127,7 +124,7 @@ Inherits WebSDKUIControl
 		    SharedCSSFile.MIMEType = "text/css"
 		  End If
 
-		  Return Array(MobileTheme.SharedThemeFile.URL, SharedCSSFile.URL)
+		  Return Array(SharedCSSFile.URL)
 		End Function
 	#tag EndEvent
 
@@ -149,6 +146,7 @@ Inherits WebSDKUIControl
 		    + "if(el){el.style.position='relative';" _
 		    + "this.wrapper=document.createElement('div');" _
 		    + "this.wrapper.className='mobile-card';" _
+		    + "this.wrapper.style.cssText='width:100%;height:100%;box-sizing:border-box';" _
 		    + "el.appendChild(this.wrapper);" _
 		    + "var self=this;" _
 		    + "this.wrapper.addEventListener('touchend',function(e){" _

@@ -105,7 +105,7 @@ Inherits WebSDKUIControl
 		    + "-webkit-tap-highlight-color:transparent}" _
 		    + ".mobile-segment__button{padding:var(--mobile-space-xs) var(--mobile-space-md);" _
 		    + "border:none;background:transparent;" _
-		    + "border-radius:calc(var(--mobile-radius-lg) - 2px);" _
+		    + "border-radius:var(--mobile-radius-lg);" _
 		    + "font-size:var(--mobile-text-sm);font-weight:var(--mobile-font-medium);" _
 		    + "color:var(--mobile-text-secondary);cursor:pointer;" _
 		    + "transition:all var(--mobile-duration-normal) var(--mobile-ease);" _
@@ -122,7 +122,7 @@ Inherits WebSDKUIControl
 		    SharedCSSFile.MIMEType = "text/css"
 		  End If
 
-		  Return Array(MobileTheme.SharedThemeFile.URL, SharedCSSFile.URL)
+		  Return Array(SharedCSSFile.URL)
 		End Function
 	#tag EndEvent
 
@@ -144,6 +144,7 @@ Inherits WebSDKUIControl
 		    + "if(el){el.style.position='relative';" _
 		    + "this.wrapper=document.createElement('div');" _
 		    + "this.wrapper.className='mobile-segment';" _
+		    + "this.wrapper.style.cssText='width:100%;height:100%;box-sizing:border-box';" _
 		    + "el.appendChild(this.wrapper)}}" _
 		    + "updateControl(data){try{var update=JSON.parse(data);" _
 		    + "if(Array.isArray(update.items)){this.items=update.items}" _
