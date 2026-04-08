@@ -85,12 +85,12 @@ Inherits WebSDKUIControl
 		    SharedCSSFile = New WebFile
 		    SharedCSSFile.Data = "@layer mobile-components{" _
 		    + ".mobile-segment{display:inline-flex;background:var(--mobile-gray-200);" _
-		    + "border-radius:var(--mobile-radius-lg);padding:2px;gap:2px;" _
+		    + "border-radius:var(--mobile-radius-xl);padding:2px;gap:2px;" _
 		    + "font-family:var(--mobile-font);user-select:none;-webkit-user-select:none;" _
 		    + "-webkit-tap-highlight-color:transparent}" _
 		    + ".mobile-segment__button{padding:var(--mobile-space-xs) var(--mobile-space-md);" _
 		    + "border:none;background:transparent;" _
-		    + "border-radius:var(--mobile-radius-lg);" _
+		    + "border-radius:var(--mobile-radius-lg);cursor:pointer;" _
 		    + "font-size:var(--mobile-text-sm);font-weight:var(--mobile-font-medium);" _
 		    + "color:var(--mobile-text-secondary);cursor:pointer;" _
 		    + "transition:all var(--mobile-duration-normal) var(--mobile-ease);" _
@@ -142,7 +142,7 @@ Inherits WebSDKUIControl
 		    + "this.wrapper.replaceChildren();" _
 		    + "var self=this;" _
 		    + "for(var i=0;i<this.items.length;i++){" _
-		    + "var btn=document.createElement('button');" _
+		    + "var btn=document.createElement('div');" _
 		    + "btn.className='mobile-segment__button';" _
 		    + "btn.textContent=this.items[i];" _
 		    + "if(i===this.selectedIndex){btn.classList.add('is-selected')}" _

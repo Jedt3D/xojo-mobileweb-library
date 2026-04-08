@@ -574,6 +574,8 @@ Xojo Web 2.0 uses Bootstrap 5.3 for built-in controls. Your WebSDK CSS is comple
 - Your CSS targets: `.xojo-chips__chip`, `.mobile-toggle__track`
 - **Zero conflict** as long as you never style bare HTML elements
 
+**⚠ @layer vs Bootstrap:** Bootstrap's CSS is **unlayered**. Your WebSDK CSS in `@layer mobile-components` has lower cascade priority. Bootstrap's bare element rules (`button { border-radius: 0 }`) will always override your layered class rules. **Solution:** Use `<div>` or `<span>` instead of `<button>`, `<input>`, or other elements that Bootstrap resets.
+
 ---
 
 ## Convenience API Pattern
@@ -896,6 +898,7 @@ End Sub
 | `g.Bold = True` in layout editor | Silently kills IDE preview — `g.Bold` doesn't exist in XojoScript | Use `g.FontSize` for emphasis |
 | Setting `Enabled` without `UpdateControl` | Browser doesn't reflect change | Call `control.UpdateControl` after |
 | Styling bare HTML elements in CSS | Conflicts with Bootstrap 5.3 | Always use scoped class selectors |
+| Using `<button>` in WebSDK controls | Bootstrap reboot sets `button{border-radius:0}` — unlayered CSS always beats `@layer` | Use `<div>` with `cursor:pointer` instead of `<button>` |
 | `As New Dictionary` in `#tag Property` | Doesn't initialize properly | Initialize in Constructor or method |
 | Returning shared theme URL from multiple controls | Framework deduplicates URLs; may skip your control's own CSS | Each control returns only its own CSS URL |
 | Wrapper div without `width:100%;height:100%` | Child wrapper has zero size, content invisible | Set inline style: `width:100%;height:100%;box-sizing:border-box` |
