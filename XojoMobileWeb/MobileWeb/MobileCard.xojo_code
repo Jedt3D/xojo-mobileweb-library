@@ -1,36 +1,68 @@
 #tag Class
-Protected Class Toggle
+Protected Class MobileCard
 Inherits WebSDKUIControl
 	#tag Event
 		Sub DrawControlInLayoutEditor(g As Graphics)
-		  // XojoScript context: use StringProperty/BooleanProperty, not m* fields
+		  // Background
 		  g.DrawingColor = &cF8FAFC
 		  g.FillRectangle(0, 0, g.Width, g.Height)
 
-		  Var trackW As Double = 52
-		  Var trackH As Double = 32
-		  Var trackX As Double = 10
-		  Var trackY As Double = (g.Height - trackH) / 2
-		  Var thumbSize As Double = 28
-		  Var isOn As Boolean = BooleanProperty("IsOn")
+		  // Card background with rounded corners
+		  g.DrawingColor = &cFFFFFF
+		  g.FillRoundRectangle(4, 4, g.Width - 8, g.Height - 8, 12, 12)
 
-		  If isOn Then
-		    g.DrawingColor = &c1D4ED8
-		    g.FillRoundRectangle(trackX, trackY, trackW, trackH, trackH, trackH)
-		    g.DrawingColor = &cFFFFFF
-		    g.FillOval(trackX + trackW - thumbSize - 2, trackY + 2, thumbSize, thumbSize)
-		  Else
-		    g.DrawingColor = &cCBD5E1
-		    g.FillRoundRectangle(trackX, trackY, trackW, trackH, trackH, trackH)
-		    g.DrawingColor = &cFFFFFF
-		    g.FillOval(trackX + 2, trackY + 2, thumbSize, thumbSize)
+		  // Card border
+		  g.DrawingColor = &cE2E8F0
+		  g.DrawRoundRectangle(4, 4, g.Width - 8, g.Height - 8, 12, 12)
+
+		  // Shadow hint (subtle bottom line)
+		  g.DrawingColor = &cCBD5E1
+		  g.DrawRoundRectangle(5, 5, g.Width - 8, g.Height - 8, 12, 12)
+
+		  Var contentY As Double = 8
+		  Var contentX As Double = 12
+		  Var contentW As Double = g.Width - 24
+
+		  // Image placeholder area
+		  Var imgH As Double = 60
+		  If g.Height > 120 Then
+		    g.DrawingColor = &cE2E8F0
+		    g.FillRoundRectangle(4, 4, g.Width - 8, imgH, 12, 0)
+		    // Image icon placeholder
+		    g.DrawingColor = &c94A3B8
+		    Var iconX As Double = (g.Width - 24) / 2
+		    Var iconY As Double = (imgH - 16) / 2 + 4
+		    g.DrawRectangle(iconX, iconY, 24, 16)
+		    g.DrawLine(iconX, iconY + 16, iconX + 10, iconY + 6)
+		    g.DrawLine(iconX + 10, iconY + 6, iconX + 16, iconY + 10)
+		    g.DrawLine(iconX + 16, iconY + 10, iconX + 24, iconY + 2)
+		    contentY = imgH + 12
 		  End If
 
-		  Var lbl As String = StringProperty("Label")
-		  If lbl <> "" Then
-		    g.FontSize = 14
-		    g.DrawingColor = &c0F172A
-		    g.DrawText(lbl, trackX + trackW + 10, g.Height / 2 + g.TextHeight / 4)
+		  // Title — use StringProperty for XojoScript access
+		  Var titleText As String = StringProperty("Title")
+		  If titleText = "" Then titleText = "Card Title"
+		  g.FontSize = 16
+		  g.DrawingColor = &c0F172A
+		  g.DrawText(titleText, contentX, contentY + g.TextHeight)
+		  contentY = contentY + g.TextHeight + 4
+
+		  // Subtitle
+		  Var subtitleText As String = StringProperty("Subtitle")
+		  If subtitleText = "" Then subtitleText = "Subtitle"
+		  g.FontSize = 12
+		  g.DrawingColor = &c64748B
+		  g.DrawText(subtitleText, contentX, contentY + g.TextHeight)
+		  contentY = contentY + g.TextHeight + 8
+
+		  // Body
+		  Var bodyText As String = StringProperty("Body")
+		  If bodyText = "" Then bodyText = "Body text..."
+		  g.FontSize = 13
+		  g.DrawingColor = &c94A3B8
+		  // Only draw if there's room
+		  If contentY + g.TextHeight < g.Height - 12 Then
+		    g.DrawText(bodyText, contentX, contentY + g.TextHeight)
 		  End If
 		End Sub
 	#tag EndEvent
@@ -38,9 +70,8 @@ Inherits WebSDKUIControl
 	#tag Event
 		Function ExecuteEvent(name As String, parameters As JSONItem) As Boolean
 		  Select Case name.Lowercase
-		  Case "toggled"
-		    mIsOn = parameters.Value("value")
-		    RaiseEvent Toggled(mIsOn)
+		  Case "pressed"
+		    RaiseEvent Pressed()
 		    Return True
 		  End Select
 		End Function
@@ -53,15 +84,17 @@ Inherits WebSDKUIControl
 
 	#tag Event
 		Function JavaScriptClassName() As String
-		  Return "MobileWeb.Toggle"
+		  Return "MobileWeb.Card"
 		End Function
 	#tag EndEvent
 
 	#tag Event
 		Sub Serialize(js As JSONItem)
-		  js.Value("isOn") = mIsOn
-		  js.Value("label") = mLabel
-		  js.Value("labelPosition") = mLabelPosition
+		  js.Value("title") = mTitle
+		  js.Value("subtitle") = mSubtitle
+		  js.Value("body") = mBody
+		  js.Value("imageURL") = mImageURL
+		  js.Value("elevated") = mElevated
 		  js.Value("enabled") = Self.Enabled
 		End Sub
 	#tag EndEvent
@@ -73,32 +106,25 @@ Inherits WebSDKUIControl
 		  If SharedCSSFile = Nil Then
 		    SharedCSSFile = New WebFile
 		    SharedCSSFile.Data = "@layer mobile-components{" _
-		    + ".mobile-toggle{display:inline-flex;align-items:center;gap:var(--mobile-space-sm);" _
-		    + "cursor:pointer;user-select:none;-webkit-user-select:none;" _
-		    + "min-height:var(--mobile-tap-size);font-family:var(--mobile-font);" _
-		    + "font-size:var(--mobile-text-base);color:var(--mobile-text);" _
-		    + "-webkit-tap-highlight-color:transparent}" _
-		    + ".mobile-toggle.is-label-left{flex-direction:row-reverse}" _
-		    + ".mobile-toggle__track{position:relative;width:52px;height:32px;" _
-		    + "background:var(--mobile-border);border-radius:var(--mobile-radius-full);" _
-		    + "padding:2px;transition:background var(--mobile-duration-normal) var(--mobile-ease);" _
-		    + "flex-shrink:0}" _
-		    + ".mobile-toggle__track.is-on{background:var(--mobile-primary)}" _
-		    + ".mobile-toggle__thumb{width:28px;height:28px;background:var(--mobile-on-primary);" _
-		    + "border-radius:50%;transition:transform var(--mobile-duration-normal) var(--mobile-ease);" _
-		    + "box-shadow:var(--mobile-shadow-sm)}" _
-		    + ".mobile-toggle__track.is-on .mobile-toggle__thumb{transform:translateX(20px)}" _
-		    + ".mobile-toggle__label{font-weight:var(--mobile-font-normal);" _
-		    + "line-height:1.4}" _
-		    + ".mobile-toggle.is-disabled{opacity:var(--mobile-disabled-opacity);" _
-		    + "cursor:default;pointer-events:none}" _
+		    + ".mobile-card{background:var(--mobile-surface);border-radius:var(--mobile-radius-lg);" _
+		    + "overflow:hidden;font-family:var(--mobile-font);color:var(--mobile-text);" _
+		    + "-webkit-tap-highlight-color:transparent;cursor:pointer;user-select:none;" _
+		    + "-webkit-user-select:none;transition:box-shadow var(--mobile-duration-normal) var(--mobile-ease)}" _
+		    + ".mobile-card.has-shadow{box-shadow:var(--mobile-shadow-md)}" _
+		    + ".mobile-card__image{width:100%;display:block;object-fit:cover;max-height:200px}" _
+		    + ".mobile-card__header{padding:var(--mobile-space-md) var(--mobile-space-md) 0}" _
+		    + ".mobile-card__title{font-size:var(--mobile-text-lg);font-weight:var(--mobile-font-semibold);line-height:1.3}" _
+		    + ".mobile-card__subtitle{font-size:var(--mobile-text-sm);color:var(--mobile-text-secondary);margin-top:var(--mobile-space-xs)}" _
+		    + ".mobile-card__body{padding:var(--mobile-space-sm) var(--mobile-space-md) var(--mobile-space-md);" _
+		    + "font-size:var(--mobile-text-base);line-height:1.5}" _
+		    + ".mobile-card.is-disabled{opacity:var(--mobile-disabled-opacity);cursor:default;pointer-events:none}" _
 		    + "}"
 		    SharedCSSFile.Session = Nil
-		    SharedCSSFile.Filename = "MobileToggle.css"
+		    SharedCSSFile.Filename = "MobileCard.css"
 		    SharedCSSFile.MIMEType = "text/css"
 		  End If
 
-		  Return Array(MobileTheme.SharedThemeFile.URL, SharedCSSFile.URL)
+		  Return Array(SharedCSSFile.URL)
 		End Function
 	#tag EndEvent
 
@@ -112,23 +138,15 @@ Inherits WebSDKUIControl
 		  If SharedJSFile = Nil Then
 		    SharedJSFile = New WebFile
 		    SharedJSFile.Data = "var MobileWeb;(function(MobileWeb){" _
-		    + "class Toggle extends XojoWeb.XojoVisualControl{" _
+		    + "class Card extends XojoWeb.XojoVisualControl{" _
 		    + "constructor(id,events){super(id,events);" _
-		    + "this.isOn=false;this.label='';this.labelPosition=0;this.toggleEnabled=true;" _
+		    + "this.cardTitle='';this.subtitle='';this.body='';this.imageURL='';this.elevated=true;this.cardEnabled=true;" _
 		    + "this._touchFired=false;" _
 		    + "var el=this.DOMElement();" _
 		    + "if(el){el.style.position='relative';" _
 		    + "this.wrapper=document.createElement('div');" _
-		    + "this.wrapper.className='mobile-toggle';" _
-		    + "this.trackEl=document.createElement('div');" _
-		    + "this.trackEl.className='mobile-toggle__track';" _
-		    + "this.thumbEl=document.createElement('div');" _
-		    + "this.thumbEl.className='mobile-toggle__thumb';" _
-		    + "this.trackEl.appendChild(this.thumbEl);" _
-		    + "this.labelEl=document.createElement('span');" _
-		    + "this.labelEl.className='mobile-toggle__label';" _
-		    + "this.wrapper.appendChild(this.trackEl);" _
-		    + "this.wrapper.appendChild(this.labelEl);" _
+		    + "this.wrapper.className='mobile-card';" _
+		    + "this.wrapper.style.cssText='width:100%;height:100%;box-sizing:border-box';" _
 		    + "el.appendChild(this.wrapper);" _
 		    + "var self=this;" _
 		    + "this.wrapper.addEventListener('touchend',function(e){" _
@@ -138,34 +156,46 @@ Inherits WebSDKUIControl
 		    + "self.handleTap()})" _
 		    + "}}" _
 		    + "updateControl(data){try{var update=JSON.parse(data);" _
-		    + "this.isOn=update.isOn===true;" _
-		    + "this.label=update.label||'';" _
-		    + "this.labelPosition=typeof update.labelPosition==='number'?update.labelPosition:0;" _
-		    + "this.toggleEnabled=update.enabled!==false;" _
+		    + "this.cardTitle=update.title||'';" _
+		    + "this.subtitle=update.subtitle||'';" _
+		    + "this.body=update.body||'';" _
+		    + "this.imageURL=update.imageURL||'';" _
+		    + "this.elevated=update.elevated!==false;" _
+		    + "this.cardEnabled=update.enabled!==false;" _
 		    + "this.rebuild();" _
 		    + "super.updateControl(data)" _
-		    + "}catch(e){console.log('MobileWeb.Toggle UC ERROR:',e.message)}}" _
+		    + "}catch(e){console.log('MobileWeb.Card UC ERROR:',e.message)}}" _
 		    + "rebuild(){if(!this.wrapper)return;" _
-		    + "if(this.isOn){this.trackEl.classList.add('is-on')}" _
-		    + "else{this.trackEl.classList.remove('is-on')}" _
-		    + "this.labelEl.textContent=this.label;" _
-		    + "this.labelEl.style.display=this.label?'':'none';" _
-		    + "if(this.labelPosition===1){this.wrapper.classList.add('is-label-left')}" _
-		    + "else{this.wrapper.classList.remove('is-label-left')}" _
-		    + "if(this.toggleEnabled){this.wrapper.classList.remove('is-disabled')}" _
+		    + "while(this.wrapper.firstChild){this.wrapper.removeChild(this.wrapper.firstChild)}" _
+		    + "if(this.imageURL){var img=document.createElement('img');" _
+		    + "img.className='mobile-card__image';img.src=this.imageURL;img.alt=this.cardTitle;" _
+		    + "this.wrapper.appendChild(img)}" _
+		    + "if(this.cardTitle||this.subtitle){var header=document.createElement('div');" _
+		    + "header.className='mobile-card__header';" _
+		    + "if(this.cardTitle){var t=document.createElement('div');" _
+		    + "t.className='mobile-card__title';t.textContent=this.cardTitle;" _
+		    + "header.appendChild(t)}" _
+		    + "if(this.subtitle){var s=document.createElement('div');" _
+		    + "s.className='mobile-card__subtitle';s.textContent=this.subtitle;" _
+		    + "header.appendChild(s)}" _
+		    + "this.wrapper.appendChild(header)}" _
+		    + "if(this.body){var bd=document.createElement('div');" _
+		    + "bd.className='mobile-card__body';bd.textContent=this.body;" _
+		    + "this.wrapper.appendChild(bd)}" _
+		    + "if(this.elevated){this.wrapper.classList.add('has-shadow')}" _
+		    + "else{this.wrapper.classList.remove('has-shadow')}" _
+		    + "if(this.cardEnabled){this.wrapper.classList.remove('is-disabled')}" _
 		    + "else{this.wrapper.classList.add('is-disabled')}}" _
-		    + "handleTap(){if(!this.toggleEnabled)return;" _
-		    + "this.isOn=!this.isOn;this.rebuild();" _
+		    + "handleTap(){if(!this.cardEnabled)return;" _
 		    + "var params=new XojoWeb.JSONItem();" _
-		    + "params.set('value',this.isOn);" _
-		    + "this.triggerServerEvent('Toggled',params,false)}" _
+		    + "this.triggerServerEvent('Pressed',params,false)}" _
 		    + "render(){super.render();" _
 		    + "var el=this.DOMElement();if(!el)return;" _
 		    + "this.applyUserStyle();this.applyTooltip(el)}}" _
-		    + "MobileWeb.Toggle=Toggle" _
+		    + "MobileWeb.Card=Card" _
 		    + "})(MobileWeb||(MobileWeb={}));"
 		    SharedJSFile.Session = Nil
-		    SharedJSFile.Filename = "MobileToggle.js"
+		    SharedJSFile.Filename = "MobileCard.js"
 		    SharedJSFile.MIMEType = "application/javascript"
 		  End If
 
@@ -175,66 +205,104 @@ Inherits WebSDKUIControl
 
 
 	#tag Hook, Flags = &h0
-		Event Toggled(value As Boolean)
+		Event Pressed()
 	#tag EndHook
 
 
 	#tag ComputedProperty, Flags = &h0
 		#tag Getter
 			Get
-			  Return mIsOn
+			  Return mTitle
 			End Get
 		#tag EndGetter
 		#tag Setter
 			Set
-			  mIsOn = value
+			  mTitle = value
 			  UpdateControl
 			End Set
 		#tag EndSetter
-		IsOn As Boolean
+		Title As String
 	#tag EndComputedProperty
 
 	#tag ComputedProperty, Flags = &h0
 		#tag Getter
 			Get
-			  Return mLabel
+			  Return mSubtitle
 			End Get
 		#tag EndGetter
 		#tag Setter
 			Set
-			  mLabel = value
+			  mSubtitle = value
 			  UpdateControl
 			End Set
 		#tag EndSetter
-		Label As String
+		Subtitle As String
 	#tag EndComputedProperty
 
 	#tag ComputedProperty, Flags = &h0
 		#tag Getter
 			Get
-			  Return mLabelPosition
+			  Return mBody
 			End Get
 		#tag EndGetter
 		#tag Setter
 			Set
-			  mLabelPosition = value
+			  mBody = value
 			  UpdateControl
 			End Set
 		#tag EndSetter
-		LabelPosition As Integer
+		Body As String
+	#tag EndComputedProperty
+
+	#tag ComputedProperty, Flags = &h0
+		#tag Getter
+			Get
+			  Return mImageURL
+			End Get
+		#tag EndGetter
+		#tag Setter
+			Set
+			  mImageURL = value
+			  UpdateControl
+			End Set
+		#tag EndSetter
+		ImageURL As String
+	#tag EndComputedProperty
+
+	#tag ComputedProperty, Flags = &h0
+		#tag Getter
+			Get
+			  Return mElevated
+			End Get
+		#tag EndGetter
+		#tag Setter
+			Set
+			  mElevated = value
+			  UpdateControl
+			End Set
+		#tag EndSetter
+		Elevated As Boolean
 	#tag EndComputedProperty
 
 
 	#tag Property, Flags = &h21
-		Private mIsOn As Boolean
+		Private mTitle As String
 	#tag EndProperty
 
 	#tag Property, Flags = &h21
-		Private mLabel As String
+		Private mSubtitle As String
 	#tag EndProperty
 
 	#tag Property, Flags = &h21
-		Private mLabelPosition As Integer
+		Private mBody As String
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
+		Private mImageURL As String
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
+		Private mElevated As Boolean = True
 	#tag EndProperty
 
 	#tag Property, Flags = &h21
@@ -267,7 +335,7 @@ Inherits WebSDKUIControl
 			Name="Height"
 			Visible=true
 			Group="Position"
-			InitialValue="44"
+			InitialValue="200"
 			Type="Integer"
 			EditorType=""
 		#tag EndViewProperty
@@ -275,7 +343,7 @@ Inherits WebSDKUIControl
 			Name="Width"
 			Visible=true
 			Group="Position"
-			InitialValue="200"
+			InitialValue="300"
 			Type="Integer"
 			EditorType=""
 		#tag EndViewProperty
@@ -428,15 +496,7 @@ Inherits WebSDKUIControl
 			EditorType=""
 		#tag EndViewProperty
 		#tag ViewProperty
-			Name="IsOn"
-			Visible=true
-			Group="Behavior"
-			InitialValue="False"
-			Type="Boolean"
-			EditorType=""
-		#tag EndViewProperty
-		#tag ViewProperty
-			Name="Label"
+			Name="Title"
 			Visible=true
 			Group="Behavior"
 			InitialValue=""
@@ -444,11 +504,35 @@ Inherits WebSDKUIControl
 			EditorType=""
 		#tag EndViewProperty
 		#tag ViewProperty
-			Name="LabelPosition"
+			Name="Subtitle"
 			Visible=true
 			Group="Behavior"
-			InitialValue="0"
-			Type="Integer"
+			InitialValue=""
+			Type="String"
+			EditorType=""
+		#tag EndViewProperty
+		#tag ViewProperty
+			Name="Body"
+			Visible=true
+			Group="Behavior"
+			InitialValue=""
+			Type="String"
+			EditorType="MultiLineEditor"
+		#tag EndViewProperty
+		#tag ViewProperty
+			Name="ImageURL"
+			Visible=true
+			Group="Behavior"
+			InitialValue=""
+			Type="String"
+			EditorType=""
+		#tag EndViewProperty
+		#tag ViewProperty
+			Name="Elevated"
+			Visible=true
+			Group="Behavior"
+			InitialValue="True"
+			Type="Boolean"
 			EditorType=""
 		#tag EndViewProperty
 	#tag EndViewBehavior

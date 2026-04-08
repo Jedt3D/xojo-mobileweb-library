@@ -1,51 +1,46 @@
 #tag Class
-Protected Class SegmentedControl
+Protected Class MobileToggle
 Inherits WebSDKUIControl
 	#tag Event
 		Sub DrawControlInLayoutEditor(g As Graphics)
-		  // No arrays, no loops — XojoScript safe
-		  g.FontSize = 13
+		  // XojoScript context: use StringProperty/BooleanProperty, not m* fields
+		  g.DrawingColor = &cF8FAFC
+		  g.FillRectangle(0, 0, g.Width, g.Height)
 
-		  // Background pill
-		  g.DrawingColor = &cE2E8F0
-		  g.FillRoundRectangle(0, 0, g.Width, g.Height, 10, 10)
+		  Var trackW As Double = 52
+		  Var trackH As Double = 32
+		  Var trackX As Double = 10
+		  Var trackY As Double = (g.Height - trackH) / 2
+		  Var thumbSize As Double = 28
+		  Var isOn As Boolean = BooleanProperty("IsOn")
 
-		  // Segment sizes
-		  Var pad As Double = 14
-		  Var segH As Double = g.Height - 4
-		  Var segY As Double = 2
-		  Var textY As Double = g.Height / 2 + g.TextHeight / 4
+		  If isOn Then
+		    g.DrawingColor = &c1D4ED8
+		    g.FillRoundRectangle(trackX, trackY, trackW, trackH, trackH, trackH)
+		    g.DrawingColor = &cFFFFFF
+		    g.FillOval(trackX + trackW - thumbSize - 2, trackY + 2, thumbSize, thumbSize)
+		  Else
+		    g.DrawingColor = &cCBD5E1
+		    g.FillRoundRectangle(trackX, trackY, trackW, trackH, trackH, trackH)
+		    g.DrawingColor = &cFFFFFF
+		    g.FillOval(trackX + 2, trackY + 2, thumbSize, thumbSize)
+		  End If
 
-		  // Segment 1: "All" — selected (white pill)
-		  Var w1 As Double = g.TextWidth("All") + pad * 2
-		  Var x1 As Double = 2
-		  g.DrawingColor = &cFFFFFF
-		  g.FillRoundRectangle(x1, segY, w1, segH, 8, 8)
-		  g.DrawingColor = &cD0D5DD
-		  g.DrawRoundRectangle(x1, segY, w1, segH, 8, 8)
-		  g.DrawingColor = &c0F172A
-		  g.DrawText("All", x1 + pad, textY)
-
-		  // Segment 2: "Active"
-		  Var x2 As Double = x1 + w1 + 2
-		  g.DrawingColor = &c64748B
-		  g.DrawText("Active", x2 + pad, textY)
-
-		  // Segment 3: "Done"
-		  Var w2 As Double = g.TextWidth("Active") + pad * 2
-		  Var x3 As Double = x2 + w2 + 2
-		  g.DrawingColor = &c64748B
-		  g.DrawText("Done", x3 + pad, textY)
+		  Var lbl As String = StringProperty("Label")
+		  If lbl <> "" Then
+		    g.FontSize = 14
+		    g.DrawingColor = &c0F172A
+		    g.DrawText(lbl, trackX + trackW + 10, g.Height / 2 + g.TextHeight / 4)
+		  End If
 		End Sub
 	#tag EndEvent
 
 	#tag Event
 		Function ExecuteEvent(name As String, parameters As JSONItem) As Boolean
 		  Select Case name.Lowercase
-		  Case "selectionchanged"
-		    mSelectedIndex = parameters.Value("index")
-		    Var itemName As String = parameters.Value("name")
-		    RaiseEvent SelectionChanged(mSelectedIndex, itemName)
+		  Case "toggled"
+		    mIsOn = parameters.Value("value")
+		    RaiseEvent Toggled(mIsOn)
 		    Return True
 		  End Select
 		End Function
@@ -58,21 +53,15 @@ Inherits WebSDKUIControl
 
 	#tag Event
 		Function JavaScriptClassName() As String
-		  Return "MobileWeb.SegmentedControl"
+		  Return "MobileWeb.Toggle"
 		End Function
 	#tag EndEvent
 
 	#tag Event
 		Sub Serialize(js As JSONItem)
-		  // Parse ItemList into a JSON array
-		  Var parts() As String = mItemList.Split(",")
-		  Var jItems As New JSONItem
-		  For Each part As String In parts
-		    Var trimmed As String = part.Trim
-		    If trimmed <> "" Then jItems.Add(trimmed)
-		  Next
-		  js.Value("items") = jItems
-		  js.Value("selectedIndex") = mSelectedIndex
+		  js.Value("isOn") = mIsOn
+		  js.Value("label") = mLabel
+		  js.Value("labelPosition") = mLabelPosition
 		  js.Value("enabled") = Self.Enabled
 		End Sub
 	#tag EndEvent
@@ -84,30 +73,32 @@ Inherits WebSDKUIControl
 		  If SharedCSSFile = Nil Then
 		    SharedCSSFile = New WebFile
 		    SharedCSSFile.Data = "@layer mobile-components{" _
-		    + ".mobile-segment{display:inline-flex;background:var(--mobile-gray-200);" _
-		    + "border-radius:var(--mobile-radius-lg);padding:2px;gap:2px;" _
-		    + "font-family:var(--mobile-font);user-select:none;-webkit-user-select:none;" _
+		    + ".mobile-toggle{display:inline-flex;align-items:center;gap:var(--mobile-space-sm);" _
+		    + "cursor:pointer;user-select:none;-webkit-user-select:none;" _
+		    + "min-height:var(--mobile-tap-size);font-family:var(--mobile-font);" _
+		    + "font-size:var(--mobile-text-base);color:var(--mobile-text);" _
 		    + "-webkit-tap-highlight-color:transparent}" _
-		    + ".mobile-segment__button{padding:var(--mobile-space-xs) var(--mobile-space-md);" _
-		    + "border:none;background:transparent;" _
-		    + "border-radius:var(--mobile-radius-lg);" _
-		    + "font-size:var(--mobile-text-sm);font-weight:var(--mobile-font-medium);" _
-		    + "color:var(--mobile-text-secondary);cursor:pointer;" _
-		    + "transition:all var(--mobile-duration-normal) var(--mobile-ease);" _
-		    + "min-height:32px;line-height:1.4;white-space:nowrap}" _
-		    + ".mobile-segment__button.is-selected{background:var(--mobile-on-primary);" _
-		    + "color:var(--mobile-text);box-shadow:var(--mobile-shadow-sm);" _
-		    + "font-weight:var(--mobile-font-semibold)}" _
-		    + ".mobile-segment__button:active{transform:scale(0.97)}" _
-		    + ".mobile-segment.is-disabled{opacity:var(--mobile-disabled-opacity);" _
-		    + "pointer-events:none}" _
+		    + ".mobile-toggle.is-label-left{flex-direction:row-reverse}" _
+		    + ".mobile-toggle__track{position:relative;width:52px;height:32px;" _
+		    + "background:var(--mobile-border);border-radius:var(--mobile-radius-full);" _
+		    + "padding:2px;transition:background var(--mobile-duration-normal) var(--mobile-ease);" _
+		    + "flex-shrink:0}" _
+		    + ".mobile-toggle__track.is-on{background:var(--mobile-primary)}" _
+		    + ".mobile-toggle__thumb{width:28px;height:28px;background:var(--mobile-on-primary);" _
+		    + "border-radius:50%;transition:transform var(--mobile-duration-normal) var(--mobile-ease);" _
+		    + "box-shadow:var(--mobile-shadow-sm)}" _
+		    + ".mobile-toggle__track.is-on .mobile-toggle__thumb{transform:translateX(20px)}" _
+		    + ".mobile-toggle__label{font-weight:var(--mobile-font-normal);" _
+		    + "line-height:1.4}" _
+		    + ".mobile-toggle.is-disabled{opacity:var(--mobile-disabled-opacity);" _
+		    + "cursor:default;pointer-events:none}" _
 		    + "}"
 		    SharedCSSFile.Session = Nil
-		    SharedCSSFile.Filename = "MobileSegmentedControl.css"
+		    SharedCSSFile.Filename = "MobileToggle.css"
 		    SharedCSSFile.MIMEType = "text/css"
 		  End If
 
-		  Return Array(SharedCSSFile.URL)
+		  Return Array(MobileTheme.SharedThemeFile.URL, SharedCSSFile.URL)
 		End Function
 	#tag EndEvent
 
@@ -121,52 +112,60 @@ Inherits WebSDKUIControl
 		  If SharedJSFile = Nil Then
 		    SharedJSFile = New WebFile
 		    SharedJSFile.Data = "var MobileWeb;(function(MobileWeb){" _
-		    + "class SegmentedControl extends XojoWeb.XojoVisualControl{" _
+		    + "class Toggle extends XojoWeb.XojoVisualControl{" _
 		    + "constructor(id,events){super(id,events);" _
-		    + "this.items=[];this.selectedIndex=0;this.segEnabled=true;" _
+		    + "this.isOn=false;this.label='';this.labelPosition=0;this.toggleEnabled=true;" _
 		    + "this._touchFired=false;" _
 		    + "var el=this.DOMElement();" _
 		    + "if(el){el.style.position='relative';" _
 		    + "this.wrapper=document.createElement('div');" _
-		    + "this.wrapper.className='mobile-segment';" _
-		    + "this.wrapper.style.cssText='width:100%;height:100%;box-sizing:border-box';" _
-		    + "el.appendChild(this.wrapper)}}" _
+		    + "this.wrapper.className='mobile-toggle';" _
+		    + "this.trackEl=document.createElement('div');" _
+		    + "this.trackEl.className='mobile-toggle__track';" _
+		    + "this.thumbEl=document.createElement('div');" _
+		    + "this.thumbEl.className='mobile-toggle__thumb';" _
+		    + "this.trackEl.appendChild(this.thumbEl);" _
+		    + "this.labelEl=document.createElement('span');" _
+		    + "this.labelEl.className='mobile-toggle__label';" _
+		    + "this.wrapper.appendChild(this.trackEl);" _
+		    + "this.wrapper.appendChild(this.labelEl);" _
+		    + "el.appendChild(this.wrapper);" _
+		    + "var self=this;" _
+		    + "this.wrapper.addEventListener('touchend',function(e){" _
+		    + "e.preventDefault();self._touchFired=true;self.handleTap()});" _
+		    + "this.wrapper.addEventListener('click',function(){" _
+		    + "if(self._touchFired){self._touchFired=false;return}" _
+		    + "self.handleTap()})" _
+		    + "}}" _
 		    + "updateControl(data){try{var update=JSON.parse(data);" _
-		    + "if(Array.isArray(update.items)){this.items=update.items}" _
-		    + "if(typeof update.selectedIndex==='number'){this.selectedIndex=update.selectedIndex}" _
-		    + "this.segEnabled=update.enabled!==false;" _
+		    + "this.isOn=update.isOn===true;" _
+		    + "this.label=update.label||'';" _
+		    + "this.labelPosition=typeof update.labelPosition==='number'?update.labelPosition:0;" _
+		    + "this.toggleEnabled=update.enabled!==false;" _
 		    + "this.rebuild();" _
 		    + "super.updateControl(data)" _
-		    + "}catch(e){console.log('MobileWeb.SegmentedControl UC ERROR:',e.message)}}" _
+		    + "}catch(e){console.log('MobileWeb.Toggle UC ERROR:',e.message)}}" _
 		    + "rebuild(){if(!this.wrapper)return;" _
-		    + "this.wrapper.replaceChildren();" _
-		    + "var self=this;" _
-		    + "for(var i=0;i<this.items.length;i++){" _
-		    + "var btn=document.createElement('button');" _
-		    + "btn.className='mobile-segment__button';" _
-		    + "btn.textContent=this.items[i];" _
-		    + "if(i===this.selectedIndex){btn.classList.add('is-selected')}" _
-		    + "btn.addEventListener('touchend',(function(idx){return function(e){" _
-		    + "e.preventDefault();self._touchFired=true;self.handleSelect(idx)}})(i));" _
-		    + "btn.addEventListener('click',(function(idx){return function(){" _
-		    + "if(self._touchFired){self._touchFired=false;return}" _
-		    + "self.handleSelect(idx)}})(i));" _
-		    + "this.wrapper.appendChild(btn)}" _
-		    + "if(this.segEnabled){this.wrapper.classList.remove('is-disabled')}" _
+		    + "if(this.isOn){this.trackEl.classList.add('is-on')}" _
+		    + "else{this.trackEl.classList.remove('is-on')}" _
+		    + "this.labelEl.textContent=this.label;" _
+		    + "this.labelEl.style.display=this.label?'':'none';" _
+		    + "if(this.labelPosition===1){this.wrapper.classList.add('is-label-left')}" _
+		    + "else{this.wrapper.classList.remove('is-label-left')}" _
+		    + "if(this.toggleEnabled){this.wrapper.classList.remove('is-disabled')}" _
 		    + "else{this.wrapper.classList.add('is-disabled')}}" _
-		    + "handleSelect(index){if(!this.segEnabled)return;" _
-		    + "this.selectedIndex=index;this.rebuild();" _
+		    + "handleTap(){if(!this.toggleEnabled)return;" _
+		    + "this.isOn=!this.isOn;this.rebuild();" _
 		    + "var params=new XojoWeb.JSONItem();" _
-		    + "params.set('index',index);" _
-		    + "params.set('name',this.items[index]||'');" _
-		    + "this.triggerServerEvent('SelectionChanged',params,false)}" _
+		    + "params.set('value',this.isOn);" _
+		    + "this.triggerServerEvent('Toggled',params,false)}" _
 		    + "render(){super.render();" _
 		    + "var el=this.DOMElement();if(!el)return;" _
 		    + "this.applyUserStyle();this.applyTooltip(el)}}" _
-		    + "MobileWeb.SegmentedControl=SegmentedControl" _
+		    + "MobileWeb.Toggle=Toggle" _
 		    + "})(MobileWeb||(MobileWeb={}));"
 		    SharedJSFile.Session = Nil
-		    SharedJSFile.Filename = "MobileSegmentedControl.js"
+		    SharedJSFile.Filename = "MobileToggle.js"
 		    SharedJSFile.MIMEType = "application/javascript"
 		  End If
 
@@ -176,117 +175,66 @@ Inherits WebSDKUIControl
 
 
 	#tag Hook, Flags = &h0
-		Event SelectionChanged(index As Integer, name As String)
+		Event Toggled(value As Boolean)
 	#tag EndHook
 
 
-	#tag Method, Flags = &h0
-		Sub AddItem(name As String)
-		  If mItemList = "" Then
-		    mItemList = name
-		  Else
-		    mItemList = mItemList + "," + name
-		  End If
-		  UpdateControl
-		End Sub
-	#tag EndMethod
-
-	#tag Method, Flags = &h0
-		Sub RemoveItem(name As String)
-		  Var parts() As String = mItemList.Split(",")
-		  Var result() As String
-		  For Each part As String In parts
-		    Var trimmed As String = part.Trim
-		    If trimmed <> "" And trimmed <> name Then
-		      result.Add(trimmed)
-		    End If
-		  Next
-		  mItemList = String.FromArray(result, ",")
-		  UpdateControl
-		End Sub
-	#tag EndMethod
-
-	#tag Method, Flags = &h0
-		Sub ClearItems()
-		  mItemList = ""
-		  mSelectedIndex = 0
-		  UpdateControl
-		End Sub
-	#tag EndMethod
-
-	#tag Method, Flags = &h0
-		Function AllItems() As String()
-		  Var parts() As String = mItemList.Split(",")
-		  Var result() As String
-		  For Each part As String In parts
-		    Var trimmed As String = part.Trim
-		    If trimmed <> "" Then result.Add(trimmed)
-		  Next
-		  Return result
-		End Function
-	#tag EndMethod
-
-
 	#tag ComputedProperty, Flags = &h0
 		#tag Getter
 			Get
-			  Return mItemList
+			  Return mIsOn
 			End Get
 		#tag EndGetter
 		#tag Setter
 			Set
-			  mItemList = value
+			  mIsOn = value
 			  UpdateControl
 			End Set
 		#tag EndSetter
-		ItemList As String
+		IsOn As Boolean
 	#tag EndComputedProperty
 
 	#tag ComputedProperty, Flags = &h0
 		#tag Getter
 			Get
-			  Return mSelectedIndex
+			  Return mLabel
 			End Get
 		#tag EndGetter
 		#tag Setter
 			Set
-			  mSelectedIndex = value
+			  mLabel = value
 			  UpdateControl
 			End Set
 		#tag EndSetter
-		SelectedIndex As Integer
+		Label As String
 	#tag EndComputedProperty
 
 	#tag ComputedProperty, Flags = &h0
 		#tag Getter
 			Get
-			  Var items() As String = AllItems()
-			  If mSelectedIndex >= 0 And mSelectedIndex <= items.LastIndex Then
-			    Return items(mSelectedIndex)
-			  End If
-			  Return ""
+			  Return mLabelPosition
 			End Get
 		#tag EndGetter
-		SelectedItem As String
-	#tag EndComputedProperty
-
-	#tag ComputedProperty, Flags = &h0
-		#tag Getter
-			Get
-			  Var items() As String = AllItems()
-			  Return items.Count
-			End Get
-		#tag EndGetter
-		Count As Integer
+		#tag Setter
+			Set
+			  mLabelPosition = value
+			  UpdateControl
+			End Set
+		#tag EndSetter
+		LabelPosition As Integer
 	#tag EndComputedProperty
 
 
 	#tag Property, Flags = &h21
-		Private mItemList As String
+		Private mIsOn As Boolean
 	#tag EndProperty
 
 	#tag Property, Flags = &h21
-		Private mSelectedIndex As Integer
+		Private mLabel As String
+	#tag EndProperty
+
+	#tag Property, Flags = &h21
+		Private mLabelPosition As Integer
 	#tag EndProperty
 
 	#tag Property, Flags = &h21
@@ -319,7 +267,7 @@ Inherits WebSDKUIControl
 			Name="Height"
 			Visible=true
 			Group="Position"
-			InitialValue="36"
+			InitialValue="44"
 			Type="Integer"
 			EditorType=""
 		#tag EndViewProperty
@@ -327,7 +275,7 @@ Inherits WebSDKUIControl
 			Name="Width"
 			Visible=true
 			Group="Position"
-			InitialValue="300"
+			InitialValue="200"
 			Type="Integer"
 			EditorType=""
 		#tag EndViewProperty
@@ -480,32 +428,24 @@ Inherits WebSDKUIControl
 			EditorType=""
 		#tag EndViewProperty
 		#tag ViewProperty
-			Name="ItemList"
+			Name="IsOn"
 			Visible=true
 			Group="Behavior"
-			InitialValue=""
-			Type="String"
-			EditorType="MultiLineEditor"
-		#tag EndViewProperty
-		#tag ViewProperty
-			Name="SelectedIndex"
-			Visible=true
-			Group="Behavior"
-			InitialValue="0"
-			Type="Integer"
+			InitialValue="False"
+			Type="Boolean"
 			EditorType=""
 		#tag EndViewProperty
 		#tag ViewProperty
-			Name="SelectedItem"
-			Visible=false
+			Name="Label"
+			Visible=true
 			Group="Behavior"
 			InitialValue=""
 			Type="String"
 			EditorType=""
 		#tag EndViewProperty
 		#tag ViewProperty
-			Name="Count"
-			Visible=false
+			Name="LabelPosition"
+			Visible=true
 			Group="Behavior"
 			InitialValue="0"
 			Type="Integer"

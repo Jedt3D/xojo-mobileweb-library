@@ -34,7 +34,7 @@ Begin WebPage MainWebPage
    _mDesignWidth   =   0
    _mName          =   ""
    _mPanelIndex    =   -1
-   Begin Toggle Toggle1
+   Begin MobileToggle Toggle1
       ControlID       =   ""
       Enabled         =   True
       Height          =   44
@@ -58,7 +58,7 @@ Begin WebPage MainWebPage
       _mName          =   ""
       _mPanelIndex    =   -1
    End
-   Begin SegmentedControl Segment1
+   Begin MobileSegment Segment1
       ControlID       =   ""
       Enabled         =   True
       Height          =   36
@@ -81,7 +81,7 @@ Begin WebPage MainWebPage
       _mName          =   ""
       _mPanelIndex    =   -1
    End
-   Begin Card Card1
+   Begin MobileCard Card1
       Body            =   "This is a sample card with body text to test the MobileWeb Card control."
       ControlID       =   ""
       Elevated        =   True
